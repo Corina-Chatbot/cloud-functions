@@ -6,7 +6,7 @@ from dateutil import parser
 import re
 
 from translation_countries import TRANSLATION_COUNTRIES
-
+from discovery import do_nlp_query
 
 cache = {}
 
@@ -46,7 +46,7 @@ def get_alerts_bund():
     meldungen = []
 
     try:
-        for alert in out:
+        for alert in out[::-1]:
             time_sent = parser.parse(alert['sent'])
             time_sent = time_sent.replace(tzinfo=None)
             if time_sent + datetime.timedelta(days=2) < current:
@@ -126,7 +126,8 @@ def orchestrator(dict):
         out, retrieved = cached("meldungen_bund", get_alerts_bund)
         relevant = list(filter(lambda meldung: re.search(place_query, meldung["area"], re.IGNORECASE), out))
         return {
-            "alerts": relevant
+            "alerts": relevant,
+            "retrieved": retrieved
         }
     
     if dict['action'] == "NLU":
@@ -141,3 +142,7 @@ def orchestrator(dict):
             return {"entity" : filteredEntities[0]['text'] }
         else:
             return {}
+
+    if dict['action'] == "DISCOVERY":
+        response = do_nlp_query(dict['query'])
+        return response
