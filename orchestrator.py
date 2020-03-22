@@ -13,6 +13,10 @@ cache = {}
 
 
 def cached(name, data_fn, dt=datetime.timedelta(minutes=10)):
+    """
+    Simple Cache for data sources. data_fn is only called if cache is not available or 
+    invalidated.
+    """
     now = datetime.datetime.now()
     data = None
     if name not in cache or cache[name] is None or cache[name]['retrieved'] + dt < now:
@@ -30,22 +34,31 @@ def cached(name, data_fn, dt=datetime.timedelta(minutes=10)):
 
 
 def get_openmedical_de():
+    """
+    Parse Data from RKI for Germany.
+    """
     response1 = requests.get("https://covid-19.openmedical.de/index.json")
     out = response1.json()
     return out
 
+
 def get_openmedical_world():
+    """
+    Parse Data from RKI for World
+    """
     response1 = requests.get("https://covid-19.openmedical.de/world.json")
     out = response1.json()
     return out
 
+
 def get_alerts_bund():
+    """
+    Get alerts from Bundesministerium. Keep only the most recent ones (last 2 days)
+    """
     response1 = requests.get("https://warnung.bund.de/bbk.mowas/gefahrendurchsagen.json")
     out = response1.json()
-
     current = datetime.datetime.now()
     meldungen = []
-
     try:
         for alert in out[::-1]:
             time_sent = parser.parse(alert['sent'])
@@ -68,10 +81,18 @@ def get_alerts_bund():
 
 
 def get_relevance(entity):
+    """
+    Get relevance of an entity
+    """
     return entity['relevance']
 
 
 def orchestrator(dict):
+    """
+    Main Orchestrator. Routing is performed based on dict['action']
+    """
+
+    ###  Fallzahlen ###
 
     if dict['action'] == "FALLZAHLEN":
 
@@ -119,6 +140,10 @@ def orchestrator(dict):
             land_german = TRANSLATION_COUNTRIES[land] if land in TRANSLATION_COUNTRIES else land
             return {"state" : land_german, "infected" : infiziert, "dead": tot, "infected_diff": infiziert_diff, "dead_diff": tot_diff, "date": datum, "quelle": quelle, "retrieved": retrieved}
     
+
+    ### Risikogebiete ###
+    # TODO: this is not dynamic yet!
+
     if dict['action'] == "RISIKOGEBIETE":
         if 'country' in dict:
             if dict['country'] in RISIKO_GEBIETE:
@@ -140,6 +165,9 @@ def orchestrator(dict):
                 'retrieved': date
             }
 
+
+    ### Meldungen vom Bund ###
+
     if dict['action'] == "MELDUNGEN":
         place_query = '' if 'place' not in dict else dict['place']
         out, retrieved = cached("meldungen_bund", get_alerts_bund)
@@ -149,6 +177,9 @@ def orchestrator(dict):
             "retrieved": retrieved
         }
     
+
+    ### Perform a request to NLU API
+
     if dict['action'] == "NLU":
         jsonToSend = {"text": dict['text'],"features": {"sentiment": {},"categories": {},"concepts": {},"entities": {},"keywords": {}}}
         response = requests.post('https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/db856ffe-f2ed-47f3-800e-93a0faaaa0b4/v1/analyze?version=2018-11-16', json=jsonToSend, auth=('apikey', 'cF9dVhGHc4408lmaLjyse831NK_vzYtaEZXYk8ygJGFK'))
@@ -162,9 +193,15 @@ def orchestrator(dict):
         else:
             return {}
 
+
+    ### Perform a request on discovery API
+
     if dict['action'] == "DISCOVERY":
         response = do_nlp_query(dict['query'])
         return response
+
+
+    ### Provide training feedback to discoveery API
 
     if dict['action'] == "FEEDBACK":
         relevance = 5 if dict['feedback'] > 0 else 0
@@ -179,9 +216,12 @@ def orchestrator(dict):
             }
         except Exception as e:
             return {
-                'result': False
+                'result': False,
             }
 
+
+    ### Default 
+    
     return {
         'result': 'Unknown action'
     }

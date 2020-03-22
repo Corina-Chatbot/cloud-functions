@@ -11,6 +11,7 @@
 from orchestrator import orchestrator
 
 def main(dict):
+    # run the orchestrator
     return orchestrator(dict)
             
         
