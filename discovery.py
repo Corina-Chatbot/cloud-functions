@@ -21,6 +21,21 @@ discovery.set_service_url(DISCOVERY_URL)
 discovery.set_default_headers({'x-watson-learning-opt-out': "true"})
 discovery.set_disable_ssl_verification(True)
 
+
+def set_relevancy(query, document_id, relevance):
+    return discovery.add_training_data(
+        environment_id=ENVIRONMENT_ID, 
+        collection_id=COLLECTION_ID, 
+        natural_language_query=query,
+        examples=[
+            {
+                "document_id": document_id,
+                "relevance": relevance
+            }
+        ]
+    )
+
+
 def do_nlp_query(query):
     query_result = discovery.query(
         environment_id=ENVIRONMENT_ID,
@@ -56,6 +71,7 @@ def do_nlp_query(query):
         best_results.append(prev)
         
     return {
+        "session": query_result["session_token"],
         "results": best_results,
         "retrieved": datetime.now().strftime("%c")
     }

@@ -6,7 +6,7 @@ from dateutil import parser
 import re
 
 from translation_countries import TRANSLATION_COUNTRIES
-from discovery import do_nlp_query
+from discovery import do_nlp_query, set_relevancy
 from risikogebiete import RISIKO_GEBIETE
 
 cache = {}
@@ -165,3 +165,23 @@ def orchestrator(dict):
     if dict['action'] == "DISCOVERY":
         response = do_nlp_query(dict['query'])
         return response
+
+    if dict['action'] == "FEEDBACK":
+        relevance = 5 if dict['feedback'] > 0 else 0
+        try:
+            set_relevancy(
+                query=dict['text'],
+                document_id=dict['document_id'],
+                relevance=relevance
+            )
+            return {
+                'result': True
+            }
+        except Exception as e:
+            return {
+                'result': False
+            }
+
+    return {
+        'result': 'Unknown action'
+    }
