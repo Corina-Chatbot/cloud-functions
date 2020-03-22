@@ -7,6 +7,7 @@ import re
 
 from translation_countries import TRANSLATION_COUNTRIES
 from discovery import do_nlp_query
+from risikogebiete import RISIKO_GEBIETE
 
 cache = {}
 
@@ -119,7 +120,25 @@ def orchestrator(dict):
             return {"state" : land_german, "infected" : infiziert, "dead": tot, "infected_diff": infiziert_diff, "dead_diff": tot_diff, "date": datum, "quelle": quelle, "retrieved": retrieved}
     
     if dict['action'] == "RISIKOGEBIETE":
-        return {"risikogebiete" : ["China", "Italien"]}
+        if 'country' in dict:
+            if dict['country'] in RISIKO_GEBIETE:
+                return {
+                    'results': RISIKO_GEBIETE[dict['country']]['areas'],
+                    'retrieved': RISIKO_GEBIETE[dict['country']]['date']
+                }
+            else:
+                return {
+                    "results": None,
+                    "retrieved": datetime.datetime.now().strftime("%c")
+                }
+        else:
+            countries = list(RISIKO_GEBIETE.keys())
+            date = RISIKO_GEBIETE[countries[0]]['date']
+            countries_str = countries[0] if len(countries) == 1 else ', '.join(countries[:-1]) + ' und '+countries[-1]
+            return {
+                'results': countries_str,
+                'retrieved': date
+            }
 
     if dict['action'] == "MELDUNGEN":
         place_query = '' if 'place' not in dict else dict['place']

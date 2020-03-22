@@ -40,9 +40,8 @@ def do_nlp_query(query):
             for passage in query_result["passages"]:
                 if passage["document_id"] == result_id:
                     passages.append(passage)
-                if len(passages) == 3:
+                if len(passages) == 1:
                     break
-
         
         title = result["extracted_metadata"]["filename"] if 'title' not in result["extracted_metadata"] else result["extracted_metadata"]['title']
 
