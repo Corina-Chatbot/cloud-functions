@@ -12,10 +12,10 @@ from risikogebiete import RISIKO_GEBIETE
 cache = {}
 
 
-def cached(name, data_fn):
+def cached(name, data_fn, dt=datetime.timedelta(minutes=10)):
     now = datetime.datetime.now()
     data = None
-    if name not in cache or cache[name] is None or cache[name]['retrieved'] + datetime.timedelta(hours=4) < now:
+    if name not in cache or cache[name] is None or cache[name]['retrieved'] + dt < now:
         data = data_fn()
         cache[name] = {
             'data': data,
