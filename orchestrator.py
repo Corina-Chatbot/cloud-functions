@@ -204,7 +204,7 @@ def orchestrator(dict):
     ### Provide training feedback to discoveery API
 
     if dict['action'] == "FEEDBACK":
-        relevance = 5 if dict['feedback'] > 0 else 0
+        relevance = 10 if dict['feedback'] > 0 else 0
         try:
             set_relevancy(
                 query=dict['text'],
