@@ -8,6 +8,7 @@ import re
 from translation_countries import TRANSLATION_COUNTRIES
 from discovery import do_nlp_query, set_relevancy
 from risikogebiete import RISIKO_GEBIETE
+from secrets import NLU_API_KEY
 
 cache = {}
 
@@ -96,7 +97,7 @@ def orchestrator(dict):
 
     if dict['action'] == "FALLZAHLEN":
 
-        bundeslandList = ["BadenWuerttemberg", "Bayern", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hessen", "Mecklenburg-Vorpommern", "Niedersachsen", "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland","Sachsen", "Sachsen-Anhalt", "Schleswig-Holstein", "Thueringen", "Deutschland"]
+        bundeslandList = ["BadenWuerttemberg", "Baden-Württemberg", "Baden-Wuerttemberg", "Bayern", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hessen", "Mecklenburg-Vorpommern", "Niedersachsen", "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland","Sachsen", "Sachsen-Anhalt", "Schleswig-Holstein", "Thueringen", "Deutschland", "Thüringen", "NordrheinWestfalen", "SachsenAnhalt", "SchleswigHolstein", "MecklenburgVorpommern"]
         land = dict['bundesland']
         
         out = None
@@ -104,9 +105,9 @@ def orchestrator(dict):
         
         if land in bundeslandList:
             out, retrieved = cached('openmedical_de', get_openmedical_de)
-            if land == "BadenWuerttemberg":
+            if land == "BadenWuerttemberg" or land == "Baden-Wuerttemberg" or land == "Baden-Württemberg":
                 land = "Baden-W\u00fcrttemberg"
-            if land == "Thueringen":
+            if land == "Thueringen" or land == "Thüringen":
                 land = "Th\u00fcringen"
             quelle = "https://covid-19.openmedical.de/ (Robert Koch Institut)"
         else:
@@ -170,8 +171,18 @@ def orchestrator(dict):
 
     if dict['action'] == "MELDUNGEN":
         place_query = '' if 'place' not in dict else dict['place']
+        place_query = place_query.replace('ä', 'ae').replace('ü', 'ue').replace('ö', 'oe').replace('ß', 'ss').replace('-', '')
+        
+        def filter_meldung(meldung):
+            meldung_place = meldung['area'].replace('ä', 'ae').replace('ü', 'ue').replace('ö', 'oe').replace('ß', 'ss').replace('-', '')
+            found_place = re.search(place_query, meldung_place, re.IGNORECASE)
+            if found_place is None:
+                return False
+            else:
+                return True
+        
         out, retrieved = cached("meldungen_bund", get_alerts_bund)
-        relevant = list(filter(lambda meldung: re.search(place_query, meldung["area"], re.IGNORECASE), out))
+        relevant = list(filter(filter_meldung, out))
         return {
             "alerts": relevant,
             "retrieved": retrieved
@@ -182,7 +193,7 @@ def orchestrator(dict):
 
     if dict['action'] == "NLU":
         jsonToSend = {"text": dict['text'],"features": {"sentiment": {},"categories": {},"concepts": {},"entities": {},"keywords": {}}}
-        response = requests.post('https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/db856ffe-f2ed-47f3-800e-93a0faaaa0b4/v1/analyze?version=2018-11-16', json=jsonToSend, auth=('apikey', 'cF9dVhGHc4408lmaLjyse831NK_vzYtaEZXYk8ygJGFK'))
+        response = requests.post('https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/db856ffe-f2ed-47f3-800e-93a0faaaa0b4/v1/analyze?version=2018-11-16', json=jsonToSend, auth=('apikey', NLU_API_KEY))
         if response.status_code != 200:
             return {}
         entities =  response.json()['entities']

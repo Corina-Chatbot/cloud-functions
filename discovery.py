@@ -2,10 +2,10 @@ import json
 from datetime import datetime
 from ibm_watson import DiscoveryV1
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+from secrets import DISCOVERY_API_KEY
 
 # define the IDS and URLS from Watson Discovery Service
 DISCOVERY_URL = 'https://api.eu-gb.discovery.watson.cloud.ibm.com/instances/738047c5-5416-4845-8d23-c7ebd4d0c7e7'
-DISCOVERY_API_KEY = 'yXjkDlDkhCAVdjMI5y3E3zzhUJyggW04EJHzqrp73WEw'  # TODO: inject as protected environment variable after setting up CI/CD
 DISCOVERY_VERSION = '2019-04-30'
 ENVIRONMENT_ID = 'f3055480-a528-4b3d-bc9a-7e45e428b615'
 COLLECTION_ID = '304d4569-672f-47ad-9445-0becdd0cd381'
