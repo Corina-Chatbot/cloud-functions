@@ -403,6 +403,8 @@ _pkginfo.txt
 *.zip
 .vscode
 
+secrets.py
+
 # Others
 ClientBin/
 ~$*
