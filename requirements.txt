@@ -1,4 +1,4 @@
-certifi==2019.11.28
+certifi==2022.12.7
 chardet==3.0.4
 ibm-cloud-sdk-core==1.5.1
 ibm-watson==4.3.0
